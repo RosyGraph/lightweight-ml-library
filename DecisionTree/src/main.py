@@ -14,20 +14,23 @@ def report_test_predictions(dataset="car"):
         print(f"Prediction score: {round(dt.test_accuracy(test_df)*100, 4)}%.")
 
 
-def compare_depth_and_split():
+def compare_depth_and_split(dataset: str, max_depth=6):
     results_table = []
-    for depth in range(1, 7):
+    for depth in range(1, max_depth + 1):
         for f in (split_information_gain, gini, majority_error_split):
-            dt = DecisionTree(*build_features("car"), split_func=f, max_depth=depth)
-            for dataset in ("test", "training"):
-                test_df, _, _ = build_features(dataset="car", test=dataset == "test")
+            dt = DecisionTree(*build_features(dataset), split_func=f, max_depth=depth)
+            print(f"Built decision tree for depth {depth} using {f.__name__}.")
+            for mode in ("test", "training"):
+                test_df, _, _ = build_features(dataset=dataset, test=mode == "test")
                 accuracy = dt.test_accuracy(test_df)
                 results_table.append(
-                    {"depth": depth, "test/training": dataset, "split function": f.__name__, "accuracy": accuracy}
+                    {"depth": depth, "test/training": mode, "split function": f.__name__, "accuracy": accuracy}
                 )
+    filename = os.path.join("reports", f"{dataset}_decision_tree_comparison.tex")
+    with open(filename + ".bak") as f:
+        print(repr(results_table), file=f)
     results_df = pd.DataFrame(results_table)
     print(results_df)
-    filename = os.path.join("reports", "car_decision_tree_comparison.tex")
     print(f"Outputting LaTeX table to file {filename}...")
     with open(filename, "w") as f:
         print(results_df.style.to_latex(), file=f)
@@ -35,5 +38,4 @@ def compare_depth_and_split():
 
 
 if __name__ == "__main__":
-    compare_depth_and_split()
-    print("Script complete.")
+    compare_depth_and_split("bank", 16)

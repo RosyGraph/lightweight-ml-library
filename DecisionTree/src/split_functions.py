@@ -12,14 +12,15 @@ def majority_error_split(s: pd.DataFrame, attributes, label="label") -> str:
         tmp = me
         for value, p in zip(s[attribute].value_counts(normalize=True).index, s[attribute].value_counts(normalize=True)):
             subset = s[s[attribute] == value]
-            tmp -= p * majority_error(subset, label)
+            if not subset.empty:
+                tmp -= p * majority_error(subset, label)
         me_dict[attribute] = tmp
     return max(me_dict, key=me_dict.get)
 
 
 def majority_error(s: pd.DataFrame, label="label") -> np.floating:
     """Return the majority error of the subset s."""
-    return 1 - s[label].value_counts(normalize=True)[0]
+    return 1 - s[label].value_counts(normalize=True).iloc[0]
 
 
 def split_information_gain(s, attributes) -> str:
