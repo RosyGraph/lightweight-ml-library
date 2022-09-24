@@ -30,9 +30,10 @@ def compare_depth_and_split():
     filename = os.path.join("reports", "car_decision_tree_comparison.tex")
     print(f"Outputting LaTeX table to file {filename}...")
     with open(filename, "w") as f:
-        print(results_df.to_latex(), file=f)
+        print(results_df.style.to_latex(), file=f)
     return results_df
 
 
 if __name__ == "__main__":
     compare_depth_and_split()
+    print("Script complete.")
