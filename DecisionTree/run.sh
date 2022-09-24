@@ -1,1 +1,1 @@
-python3 src/features/build_features.py
+python3 src/decision_tree.py

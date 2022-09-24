@@ -1,0 +1,106 @@
+import math
+import pandas as pd
+from fractions import Fraction
+from build_features import build_features
+
+
+class Node(object):
+    def __init__(self, label, attribute, value, children=[]):
+        self.label = label
+        self.children = children
+
+
+class DecisionTree(object):
+    def __init__(self, df: pd.DataFrame, attributes, labels):
+        self.df = df
+        self.attributes = attributes
+        self.labels = labels
+        # self.tree = Node(None)
+
+    def id3(self, s=None, label="label", split_func=None):
+        if s == None:
+            s = self.df
+        if not s.empty and (self.df[label] == self.df[label][0]).all():
+            return
+        # root = Node(None)
+        print(self.information_gain(s, self.attributes))
+        return
+        for v in self.attributes.values():
+            subset = s[s[a == v]].drop(a)
+            print(subset)
+            # root.children.append(label=None, attribute=a, value=v)
+
+    def information_gain(self, s, attribute):
+        gain = entropy(s)
+        print(self.attributes)
+        return
+        for v in self.attributes[attribute]:
+            subset = s[s[attribute == v]]
+            gain -= (subset.size / s.size) * entropy(s)
+        return gain
+
+
+def entropy(s, y="label"):
+    proportions = s[y].value_counts() / s.size
+    return -sum(map(lambda n: n * math.log2(n), proportions))
+
+
+def domain(S, attribute):
+    return {s.attribute for s in S}
+
+
+def decision_tree(data, y="result", split_func=None, tabs=0):
+    attributes = set(data[0].keys()) - {y}
+    categories = {d[y] for d in data}
+    gain_dict = dict()
+    split_attr = split_func(data, y=y)
+    print(f"{'  '*tabs}split on {split_attr}")
+    values = {d[split_attr] for d in data}
+    subsets = [[d for d in data if d[split_attr] == v] for v in values]
+    for s in subsets:
+        v = s[0][split_attr]
+        print(f"{'  '*tabs}{split_attr} = {v}")
+        if all([s[0][y] == d[y] for d in s[1:]]):
+            print(f"{'  '*tabs}{split_attr} terminal: all are {s[0][y]}")
+        else:
+            subattr = split_func(s)
+            decision_tree(s, tabs=tabs + 1)
+        print()
+
+
+def bool_func(arg):
+    return (arg["x2"] == 0 and (arg["x4"] == 1)) == (arg["result"] == 1)
+
+
+def gini(data, y="result"):
+    attributes = {k: 0 for k in data[0] if k != y}
+    categories = {d[y]: 0 for d in data}
+    for attribute in attributes:
+        print(attribute)
+        counts = dict()
+        for d in data:
+            v = d[attribute]
+            category = d[y]
+            if v not in counts:
+                counts[v] = {c: 0 for c in categories}
+            counts[v][d[y]] += 1
+        total_g = 0
+        for k, v in counts.items():
+            n = sum(v.values())
+            g = 1
+            for value, count in v.items():
+                p = Fraction(count, n)
+                print(f"p({k}={value}) = {p}")
+                g -= p**2
+            print(f"g({k})={g}")
+            s = Fraction(n, len(data)) * g
+            print(f"{Fraction(n, len(data))} * {g} = {s}")
+            total_g += s
+        attributes[attribute] = total_g
+        print(total_g)
+    return min(attributes, key=attributes.get)
+
+
+if __name__ == "__main__":
+    decision_tree = DecisionTree(*build_features("car"))
+    decision_tree.id3()
