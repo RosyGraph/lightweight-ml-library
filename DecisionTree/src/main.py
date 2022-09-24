@@ -15,11 +15,12 @@ def report_test_predictions(dataset="car"):
 
 
 def compare_depth_and_split(dataset: str, max_depth=6) -> list[dict]:
+    print(f"Comparing split functions for {dataset} for max depth {max_depth} (this may take awhile)...")
     results_table = []
     for depth in range(1, max_depth + 1):
+        print(f"Reached depth {depth}.")
         for f in (split_information_gain, gini, majority_error_split):
             dt = DecisionTree(*build_features(dataset), split_func=f, max_depth=depth)
-            print(f"Built decision tree for depth {depth} using {f.__name__}. Testing...")
             for mode in ("test", "training"):
                 test_df, _, _ = build_features(dataset=dataset, test=mode == "test")
                 accuracy = dt.test_accuracy(test_df)
