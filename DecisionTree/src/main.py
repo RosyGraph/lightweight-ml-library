@@ -14,28 +14,37 @@ def report_test_predictions(dataset="car"):
         print(f"Prediction score: {round(dt.test_accuracy(test_df)*100, 4)}%.")
 
 
-def compare_depth_and_split(dataset: str, max_depth=6):
+def compare_depth_and_split(dataset: str, max_depth=6) -> list[dict]:
     results_table = []
     for depth in range(1, max_depth + 1):
         for f in (split_information_gain, gini, majority_error_split):
             dt = DecisionTree(*build_features(dataset), split_func=f, max_depth=depth)
-            print(f"Built decision tree for depth {depth} using {f.__name__}.")
+            print(f"Built decision tree for depth {depth} using {f.__name__}. Testing...")
             for mode in ("test", "training"):
                 test_df, _, _ = build_features(dataset=dataset, test=mode == "test")
                 accuracy = dt.test_accuracy(test_df)
                 results_table.append(
                     {"depth": depth, "test/training": mode, "split function": f.__name__, "accuracy": accuracy}
                 )
-    filename = os.path.join("reports", f"{dataset}_decision_tree_comparison.tex")
-    with open(filename + ".bak") as f:
+    return results_table
+
+
+def store_results(dataset: str, results_table: list[dict]):
+    repr_filename = os.path.join("reports", "python", f"{dataset}_decision_tree_comparison")
+    print(f"Outputting Python repr to file {repr_filename}...", end=" ")
+    with open(repr_filename + ".py", "w") as f:
         print(repr(results_table), file=f)
+    print("Done.")
     results_df = pd.DataFrame(results_table)
     print(results_df)
-    print(f"Outputting LaTeX table to file {filename}...")
-    with open(filename, "w") as f:
+    tex_filename = os.path.join("reports", "tex", f"{dataset}_decision_tree_comparison")
+    print(f"Outputting LaTeX table to file {tex_filename}...", end=" ")
+    with open(tex_filename + ".tex", "w") as f:
         print(results_df.style.to_latex(), file=f)
-    return results_df
+    print("Done.")
 
 
 if __name__ == "__main__":
-    compare_depth_and_split("bank", 16)
+    dataset = "bank"
+    results_table = compare_depth_and_split(dataset, max_depth=16)
+    store_results(dataset, results_table)
