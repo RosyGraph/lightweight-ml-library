@@ -1,1 +1,1 @@
-python3 src/decision_tree.py
+python3 src/main.py

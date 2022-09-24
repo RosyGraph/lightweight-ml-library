@@ -1,7 +1,11 @@
+"""split_functions.py contains methods for splitting the data in a decision tree"""
 import math
+import pandas as pd
+import numpy as np
 
 
-def majority_error_split(s, attributes, label="label"):
+def majority_error_split(s: pd.DataFrame, attributes, label="label") -> str:
+    """Return the attribute on which to split using majority error."""
     me_dict = dict()
     me = majority_error(s, label)
     for attribute in attributes:
@@ -13,42 +17,48 @@ def majority_error_split(s, attributes, label="label"):
     return max(me_dict, key=me_dict.get)
 
 
-def majority_error(s, label="label"):
+def majority_error(s: pd.DataFrame, label="label") -> np.floating:
+    """Return the majority error of the subset s."""
     return 1 - s[label].value_counts(normalize=True)[0]
 
 
-def information_gain(s, attributes, attribute):
-    gain = entropy(s)
+def split_information_gain(s, attributes) -> str:
+    """Return the attribute on which to split using information gain."""
+    attr_dict = {attribute: information_gain(s, attributes, attribute) for attribute in attributes}
+    return max(attr_dict, key=attr_dict.get)
+
+
+def information_gain(s, attributes, attribute) -> float:
+    """Return the information gain for a subset s for the given attribute."""
+    gain: float = entropy(s)
     for v in attributes[attribute]:
         subset = s.loc[s[attribute] == v]
         gain -= (subset.size / s.size) * entropy(s)
     return gain
 
 
-def entropy(s, y="label"):
+def entropy(s, y="label") -> float:
+    """Return the entropy of the subset s."""
     proportions = s[y].value_counts(normalize=True)
     return -sum(map(lambda n: n * math.log2(n), proportions))
 
 
-def split_information_gain(s, attributes):
-    attr_dict = {attribute: information_gain(s, attributes, attribute) for attribute in attributes}
-    return max(attr_dict, key=attr_dict.get)
-
-
-def gini_impurity(s, attributes, attribute):
-    leaf_impurities = []
-    for v in s[attribute].unique():
-        subset = s[s[attribute] == v]
-        impurity = 1
-        for c in subset["label"].value_counts(normalize=True):
-            impurity -= c**2
-        wt = len(subset) / len(s)
-        leaf_impurities.append(wt * impurity)
-    return sum(leaf_impurities)
-
-
-def gini(s, attributes, label="label"):
+def gini(s, attributes):
+    """Return the attribute on which to split using Gini index."""
     gini_dict = dict()
     for attribute in attributes:
         gini_dict[attribute] = gini_impurity(s, attributes, attribute)
     return min(gini_dict, key=gini_dict.get)
+
+
+def gini_impurity(s: pd.DataFrame, _, attribute) -> np.floating:
+    """Return the gini impurity of the subset s for the given attribute."""
+    return sum(map(lambda v: gini_impurity_helper(s, attribute, v), s[attribute].unique()))
+
+
+def gini_impurity_helper(s, attribute, v):
+    subset = s[s[attribute] == v]
+    impurity = np.float64(1)
+    for c in subset["label"].value_counts(normalize=True):
+        impurity -= np.power(c, 2)
+    return impurity * np.float64(len(subset) / len(s))
