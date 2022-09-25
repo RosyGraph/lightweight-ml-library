@@ -45,7 +45,29 @@ def store_results(dataset: str, results_table: list[dict]):
     print("Done.")
 
 
-if __name__ == "__main__":
+def question2b():
+    dataset = "car"
+    results_table = compare_depth_and_split(dataset)
+    store_results(dataset, results_table)
+
+
+def question3a():
     dataset = "bank"
     results_table = compare_depth_and_split(dataset, max_depth=16)
-    store_results("bank_replaced", results_table)
+    store_results(dataset, results_table)
+
+
+def question3b():
+    dataset = "bank"
+    results_table = compare_depth_and_split(dataset, fix_unknown=True, max_depth=16)
+    store_results(dataset, results_table)
+
+
+if __name__ == "__main__":
+    """
+    The following code runs each experiment from the homework. It will likely
+    take over an hour to run all experiments (subject to hardware limitations).
+    """
+    question2b()
+    question3a()
+    question3b()
