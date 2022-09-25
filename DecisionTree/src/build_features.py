@@ -5,11 +5,11 @@ import numpy as np
 from typing import Tuple
 
 
-def build_features(dataset, test=False) -> Tuple[pd.DataFrame, dict, set]:
+def build_features(dataset, fix_unknown=False, test=False) -> Tuple[pd.DataFrame, dict, set]:
     if dataset == "car":
         return build_car_features(test)
     if dataset == "bank":
-        return build_bank_features(test)
+        return build_bank_features_majority_complete(test) if fix_unknown else build_bank_features(test)
     raise Exception(f"'{dataset}' is not a known dataset.")
 
 
@@ -65,5 +65,35 @@ def build_bank_features(test=False):
     return (df, attributes, set(df["label"].unique()))
 
 
+def build_bank_features_majority_complete(test=False):
+    path_to_columns = os.path.join("data", "bank", "columns.txt")
+    columns = []
+    attributes = dict()
+    with open(path_to_columns, "r") as f:
+        columns = list(map(lambda s: s.strip(), f.readlines()))
+    data_filename = "test.csv" if test else "train.csv"
+    path_to_data = os.path.join("data", "bank", data_filename)
+    df: pd.DataFrame = pd.read_csv(path_to_data, names=columns)
+    for column in columns:
+        mode = df[column].value_counts()
+        new = mode.index[0]
+        if new == "unknown":
+            new = mode.index[1]
+        df[column].replace("unknown", new, inplace=True)
+    for numeric_column_name in ("age", "balance", "day", "duration", "campaign", "pdays", "previous"):
+        median = df[numeric_column_name].median()
+        names = [f"<{median}", f"{median}+"]
+        bins = [-np.inf, median, np.inf]
+        df[numeric_column_name] = pd.cut(df[numeric_column_name], bins, labels=names)
+    for categorical_column_name in ("job", "marital", "education", "contact", "month", "poutcome"):
+        df[categorical_column_name] = df[categorical_column_name].astype("category")
+    for bool_column_names in ("default", "housing", "loan", "label"):
+        df[bool_column_names] = df[bool_column_names].replace(("yes", "no"), (True, False))
+    attribute_keys = set(columns) - {"label"}
+    attributes = dict(zip(attribute_keys, map(lambda c: list(df[c].unique()), attribute_keys)))
+    return (df, attributes, set(df["label"].unique()))
+
+
 if __name__ == "__main__":
-    df, *_ = build_features("shy")
+    df, *_ = build_bank_features_majority_complete()
+    print(df)
