@@ -1,12 +1,80 @@
-import pandas as pd
 from typing import Optional
-from split_functions import *
+
+import numpy as np
+import pandas as pd
+
+
+class SplitFunctions(object):
+    @staticmethod
+    def majority_error_split(s: pd.DataFrame, attributes, label="label") -> str:
+        """Return the attribute on which to split using majority error."""
+        me_dict = dict()
+        me = SplitFunctions.majority_error(s, label)
+        for attribute in attributes:
+            tmp = me
+            for value, p in zip(
+                s[attribute].value_counts(normalize=True).index, s[attribute].value_counts(normalize=True)
+            ):
+                subset = s[s[attribute] == value]
+                if not subset.empty:
+                    tmp -= p * SplitFunctions.majority_error(subset, label)
+            me_dict[attribute] = tmp
+        return max(me_dict, key=me_dict.get)
+
+    @staticmethod
+    def majority_error(s: pd.DataFrame, label="label") -> np.floating:
+        """Return the majority error of the subset s."""
+        return 1 - s[label].value_counts(normalize=True).iloc[0]
+
+    @staticmethod
+    def split_information_gain(s, attributes) -> str:
+        """Return the attribute on which to split using information gain."""
+        attr_dict = {attribute: SplitFunctions.information_gain(s, attributes, attribute) for attribute in attributes}
+        return max(attr_dict, key=attr_dict.get)
+
+    @staticmethod
+    def information_gain(s, attributes, attribute) -> float:
+        """Return the information gain for a subset s for the given attribute."""
+        gain = SplitFunctions.entropy(s)
+        for v in attributes[attribute]:
+            subset = s.loc[s[attribute] == v]
+            gain -= (subset.size / s.size) * SplitFunctions.entropy(subset)
+        return gain
+
+    @staticmethod
+    def entropy(s, y="label") -> float:
+        """Return the entropy of the subset s."""
+        proportions = s[y].value_counts(normalize=True)
+        return -sum(map(lambda n: n * np.log2(n), proportions))
+
+    @staticmethod
+    def gini(s, attributes):
+        """Return the attribute on which to split using Gini index."""
+        gini_dict = dict()
+        for attribute in attributes:
+            gini_dict[attribute] = SplitFunctions.gini_impurity(s, attributes, attribute)
+        return min(gini_dict, key=gini_dict.get)
+
+    @staticmethod
+    def gini_impurity_helper(s, attribute, v):
+        subset = s[s[attribute] == v]
+        impurity = np.float64(1)
+        for c in subset["label"].value_counts(normalize=True):
+            impurity -= np.power(c, 2)
+        return impurity * np.float64(len(subset) / len(s))
+
+    @staticmethod
+    def gini_impurity(s: pd.DataFrame, _, attribute) -> np.floating:
+        """Return the gini impurity of the subset s for the given attribute."""
+        return sum(map(lambda v: SplitFunctions.gini_impurity_helper(s, attribute, v), s[attribute].unique()))
 
 
 class DecisionTree(object):
     """The DecisionTree class represents the decision process for labelling data using the ID3 algorithm."""
 
-    def __init__(self, df: pd.DataFrame, attributes, labels, split_func=split_information_gain, max_depth=-1):
+    def __init__(
+        self, df: pd.DataFrame, attributes, labels, split_func=SplitFunctions.split_information_gain, max_depth=-1
+    ):
         self.df = df
         self.attributes = attributes
         self.labels = labels
@@ -42,7 +110,9 @@ class Node(object):
         self.attribute: Optional[str] = None
 
 
-def id3(s: pd.DataFrame, attributes: dict, label="label", split_func=split_information_gain, depth=-1) -> Node:
+def id3(
+    s: pd.DataFrame, attributes: dict, label="label", split_func=SplitFunctions.split_information_gain, depth=-1
+) -> Node:
     """
     Construct a decision tree using the id3 algorithm. If a negative depth is
     supplied, then the algorithm will construct a tree with the maximum
