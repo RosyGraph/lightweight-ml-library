@@ -1,7 +1,8 @@
 """split_functions.py contains methods for splitting the data in a decision tree"""
 import math
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 
 
 def majority_error_split(s: pd.DataFrame, attributes, label="label") -> str:
@@ -31,10 +32,10 @@ def split_information_gain(s, attributes) -> str:
 
 def information_gain(s, attributes, attribute) -> float:
     """Return the information gain for a subset s for the given attribute."""
-    gain: float = entropy(s)
+    gain = entropy(s)
     for v in attributes[attribute]:
         subset = s.loc[s[attribute] == v]
-        gain -= (subset.size / s.size) * entropy(s)
+        gain -= (subset.size / s.size) * entropy(subset)
     return gain
 
 
@@ -63,3 +64,92 @@ def gini_impurity_helper(s, attribute, v):
     for c in subset["label"].value_counts(normalize=True):
         impurity -= np.power(c, 2)
     return impurity * np.float64(len(subset) / len(s))
+
+
+if __name__ == "__main__":
+    df = pd.DataFrame(
+        {
+            "O": [
+                "s",
+                "s",
+                "o",
+                "r",
+                "r",
+                "r",
+                "o",
+                "s",
+                "s",
+                "r",
+                "s",
+                "o",
+                "o",
+                "r",
+            ],
+            "T": [
+                "h",
+                "h",
+                "h",
+                "m",
+                "c",
+                "c",
+                "c",
+                "m",
+                "c",
+                "m",
+                "m",
+                "m",
+                "h",
+                "m",
+            ],
+            "H": [
+                "h",
+                "h",
+                "h",
+                "h",
+                "n",
+                "n",
+                "n",
+                "h",
+                "n",
+                "n",
+                "n",
+                "h",
+                "n",
+                "h",
+            ],
+            "W": [
+                "w",
+                "s",
+                "w",
+                "w",
+                "w",
+                "s",
+                "s",
+                "w",
+                "w",
+                "w",
+                "s",
+                "s",
+                "w",
+                "s",
+            ],
+            "label": [
+                False,
+                False,
+                True,
+                True,
+                True,
+                False,
+                True,
+                False,
+                True,
+                True,
+                True,
+                True,
+                True,
+                False,
+            ],
+        }
+    )
+    attributes = {col: df[col].unique() for col in df}
+    print(information_gain(df, attributes, "O"))
