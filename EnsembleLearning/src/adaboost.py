@@ -24,7 +24,7 @@ class AdaBoost(object):
         self.df = df
         self.attibutes = attributes
         self.t = t
-        self.votes = adaboost(df, attributes, t)
+        self.votes, self.errors = adaboost(df, attributes, t)
 
     def predict(self, example):
         predictions = {l: 0 for l in self.df["label"].unique()}
@@ -45,15 +45,19 @@ class AdaBoost(object):
 def adaboost(df, attributes, t):
     votes = dict()
     w = np.ones(len(df)) / len(df)
-    for _ in range(t):
+    errors = []
+    for i in range(t):
         stump = DecisionStump(df, attributes, df["label"].unique(), w)
         error = stump.error(df, w)
+        print(error)
+        errors.append((i, error))
         a = 0.5 * np.log((1 - error) / error)
-        votes[stump] = 0.5 * np.log((1 - error) / error)
+        votes[stump] = a
         for j in df.index:
             predicted_correctly = stump.predict(df.iloc[j]) == df["label"].iloc[j]
             if predicted_correctly:
                 w[j] *= np.exp(-a)
             else:
                 w[j] *= np.exp(a)
-    return votes
+        w = w / w.sum()
+    return votes, errors

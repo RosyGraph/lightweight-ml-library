@@ -25,7 +25,7 @@ def compare_depth_and_split(dataset: str, max_depth=5) -> list[dict]:
         ab = AdaBoost(df, attributes, t=depth + 1)
         for mode in ("test", "training"):
             test_df, _, _ = build_features(dataset=dataset, test=mode == "test")
-            results_table.append(ab.test_accuracy(test_df))
+            results_table.append((depth, ab.test_accuracy(test_df), ab.errors))
     return results_table
 
 
@@ -61,20 +61,19 @@ class StatsQuest(object):
         df["wt"] = pd.cut(df["wt"], bins, labels=names)
         attribute_keys = set(df.columns) - {"label"}
         attributes = dict(zip(attribute_keys, map(lambda c: list(df[c].unique()), attribute_keys)))
-        adaboost = AdaBoost(df, attributes, 2)
-        print(adaboost.predict(df.iloc[3]))
-        # print(adaboost.test_accuracy(df))
+        t = 5
+        adaboost = AdaBoost(df, attributes, t)
+        acc = adaboost.test_accuracy(df)
+        print(f"{acc=}")
 
 
 class HW2(object):
     @staticmethod
     def question2a():
         dataset = "bank"
-        df, attributes, _ = build_features(dataset)
-        ab = AdaBoost(df, attributes, 2)
-        results_table = compare_depth_and_split(dataset, max_depth=2)
+        results_table = compare_depth_and_split(dataset, max_depth=500)
         print(f"{results_table=}")
-        # store_results(dataset, results_table)
+        store_results(dataset, results_table)
 
 
 if __name__ == "__main__":
