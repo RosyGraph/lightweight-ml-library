@@ -78,7 +78,7 @@ class HW2(object):
         results_table = [
             ["mode", "m", "accuracy"],
         ]
-        for m in range(2):
+        for m in range(500):
             print(f"{m=}")
             trees = [DecisionTree(df.sample(frac=0.05, replace=True), attributes, labels) for _ in range(m + 1)]
             for mode in ("test", "training"):
