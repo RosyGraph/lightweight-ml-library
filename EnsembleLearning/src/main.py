@@ -163,4 +163,3 @@ if __name__ == "__main__":
         HW2.question2ci()
     if args.q2b:
         HW2.question2b()
-    HW2.question2ci()
