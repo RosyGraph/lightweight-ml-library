@@ -98,7 +98,61 @@ class HW2(object):
                 f.write(",".join(row) + "\n")
 
     @staticmethod
-    def question2ci():
+    def question2ci(predictors, test_df, results_table):
+        simple_predictors = [predictor[0] for predictor in predictors]
+        to_int = lambda x: 1 if x else -1
+        for i in test_df.index:
+            predictions = tuple(map(to_int, [tree.predict(test_df.iloc[i]) for tree in simple_predictors]))
+            hmean = sum(predictions) / len(predictions)
+            offset = to_int(test_df["label"].iloc[i])
+            bias = (hmean - offset) ** 2
+            s = 1 / (len(predictions) - 1) * sum((p - hmean) ** 2 for p in predictions)
+            gen_error = bias + s
+            results_table.append(list(map(str, [i, "simple", round(bias, 4), s, gen_error])))
+        simple_rows = [result for result in results_table if result[1] == "simple"]
+        print(simple_rows[:5])
+        simple_avg_bias = sum(float(r[2]) for r in simple_rows) / len(simple_rows)
+        simple_avg_var = sum(float(r[3]) for r in simple_rows) / len(simple_rows)
+        simple_error = simple_avg_bias + simple_avg_var
+        with open("reports/2c_simple_err.txt", "w+") as f:
+            f.write(f"{simple_avg_bias=}\n")
+            f.write(f"{simple_avg_var=}\n")
+            f.write(f"{simple_error=}")
+        with open("reports/2ci.csv", "w+") as f:
+            for row in results_table:
+                f.write(",".join(row) + "\n")
+
+    @staticmethod
+    def question2cii(predictors, test_df, results_table):
+        to_int = lambda x: 1 if x else -1
+        for i in test_df.index:
+            predictions = []
+            for bag in predictors:
+                bag_predictions = Counter([tree.predict(test_df.iloc[i]) for tree in bag])
+                predictions.append(max(bag_predictions, key=bag_predictions.get))
+            predictions = tuple(map(to_int, predictions))
+            hmean = sum(predictions) / len(predictions)
+            offset = to_int(test_df["label"].iloc[i])
+            bias = (hmean - offset) ** 2
+            s = 1 / (len(predictions) - 1) * sum((p - hmean) ** 2 for p in predictions)
+            gen_error = bias + s
+            results_table.append(list(map(str, [i, "bagged", round(bias, 4), s, gen_error])))
+        bagged_rows = [result for result in results_table if result[1] == "bagged"]
+        print(bagged_rows[:5])
+        bagged_avg_bias = sum(float(r[2]) for r in bagged_rows) / len(bagged_rows)
+        bagged_avg_var = sum(float(r[3]) for r in bagged_rows) / len(bagged_rows)
+        bagged_error = bagged_avg_bias + bagged_avg_var
+        with open("reports/2c_bagged_error.txt", "w+") as f:
+            f.write(f"{bagged_avg_bias=}\n")
+            f.write(f"{bagged_avg_var=}\n")
+            f.write(f"{bagged_error=}")
+        with open("reports/2cii.csv", "w+") as f:
+            f.write(",".join(results_table[0]) + "\n")
+            for row in bagged_rows:
+                f.write(",".join(row) + "\n")
+
+    @staticmethod
+    def question2c(part_i=True, part_ii=True):
         dataset = "bank"
         df, attributes, labels = build_features(dataset)
         df["_weight"] = np.ones(len(df.index)) / len(df.index)
@@ -113,37 +167,14 @@ class HW2(object):
             predictors.append(
                 [DecisionTree(sample.sample(frac=0.05, replace=True), attributes, labels) for _ in range(n)]
             )
-        simple_predictors = [predictor[0] for predictor in predictors]
-        to_int = lambda x: 1 if x else -1
         test_df, _, _ = build_features(dataset=dataset, test=True)
-        for i in test_df.index:
-            predictions = tuple(map(to_int, [tree.predict(test_df.iloc[i]) for tree in simple_predictors]))
-            hmean = sum(predictions) / len(predictions)
-            offset = to_int(test_df["label"].iloc[i])
-            bias = (hmean - offset) ** 2
-            s = 1 / (len(predictions) - 1) * sum((p - hmean) ** 2 for p in predictions)
-            gen_error = bias + s
-            results_table.append(list(map(str, [i, "simple", round(bias, 4), s, gen_error])))
-            # y = test_df["label"][j]
-            # errors += prediction != y
-        with open("reports/2ci.csv", "w+") as f:
+        if part_i:
+            HW2.question2ci(predictors, test_df, results_table)
+        if part_ii:
+            HW2.question2cii(predictors, test_df, results_table)
+        with open("reports/2c.csv", "w+") as f:
             for row in results_table:
                 f.write(",".join(row) + "\n")
-        """
-        for m in range(500):
-            for mode in ("test", "training"):
-                errors = 0
-                for j in test_df.index:
-                    predictions = Counter([tree.predict(test_df.iloc[j]) for tree in trees])
-                    prediction = max(predictions, key=predictions.get)
-                    y = test_df["label"][j]
-                    errors += prediction != y
-                accuracy = 1 - (errors / len(test_df))
-                results_table.append([mode, str(m), str(accuracy)])
-        with open("reports/2c.txt", "w+") as f:
-            for row in results_table:
-                f.write(",".join(row) + "\n")
-            """
 
 
 if __name__ == "__main__":
@@ -154,12 +185,15 @@ if __name__ == "__main__":
     # StatsQuest.heart_disease()
     parser = argparse.ArgumentParser(description="Runner for ensemble learner experiments")
     parser.add_argument("--q2b", action="store_true")
+    parser.add_argument("--q2c", action="store_true")
     parser.add_argument("--all", action="store_true")
     args = parser.parse_args()
     if args.all:
         print("Running all experiments (this is going to take awhile)...")
         HW2.question2a()
         HW2.question2b()
-        HW2.question2ci()
+        HW2.question2c()
     if args.q2b:
         HW2.question2b()
+    if args.q2c:
+        HW2.question2c()

@@ -1,0 +1,3 @@
+bagged_avg_bias=0.594742839999987
+bagged_avg_var=0.6514666666666848
+bagged_error=1.2462095066666719

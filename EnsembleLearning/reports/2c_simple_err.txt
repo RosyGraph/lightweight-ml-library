@@ -1,0 +1,3 @@
+simple_avg_bias=0.594742839999987
+simple_avg_var=0.6514666666666848
+simple_error=1.2462095066666719
