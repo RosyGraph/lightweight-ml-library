@@ -1,0 +1,3 @@
+dt_avg_bias=0.62
+dt_avg_var=0.12
+dt_error=0.74

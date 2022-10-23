@@ -1,0 +1,3 @@
+rf_avg_bias=0.68
+rf_avg_var=0.24
+rf_error=0.92

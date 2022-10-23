@@ -191,13 +191,12 @@ class HW2(object):
             for k in range(2, max_k + 1, 2)
         ]
         test_df, _, _ = build_features(dataset=dataset, test=True)
-        train_df, _, _ = build_features(dataset=dataset, test=False)
         for m, k, rf in predictors:
             train_err = 0
-            for i in train_df.index:
-                prediction = rf.predict(train_df.iloc[i])
-                train_err += prediction != train_df["label"].iloc[i]
-            train_err_rate = train_err / len(train_df.index)
+            for i in df.index:
+                prediction = rf.predict(df.iloc[i])
+                train_err += prediction != df["label"].iloc[i]
+            train_err_rate = train_err / len(df.index)
             results_table.append(list(map(str, (m, k, "training", train_err_rate))))
             test_err = 0
             for i in test_df.index:
@@ -206,6 +205,55 @@ class HW2(object):
             test_err_rate = test_err / len(test_df.index)
             results_table.append(list(map(str, (m, k, "test", test_err_rate))))
         with open("reports/2d.csv", "w+") as f:
+            for row in results_table:
+                f.write(",".join(row) + "\n")
+
+    @staticmethod
+    def question2e():
+        dataset = "bank"
+        df, attributes, labels = build_features(dataset)
+        df["_weight"] = np.ones(len(df.index)) / len(df.index)
+        m = 100
+        rf_predictors = []
+        dt_predictors = []
+        results_table = [["i", "forest/tree", "bias", "variance", "gen_error"]]
+        for _ in range(m):
+            sample = df.sample(n=1000, replace=False)
+            rf_predictors.append(RandomForest(sample, attributes, labels, m=m, num_attr=2))
+            dt_predictors.append(DecisionTree(sample, attributes, labels))
+        test_df, _, _ = build_features(dataset=dataset, test=True)
+        to_int = lambda x: 1 if x else -1
+        for i in test_df.index:
+            offset = to_int(test_df["label"].iloc[i])
+            rf_predictions = tuple(map(to_int, [tree.predict(test_df.iloc[i]) for tree in rf_predictors]))
+            rf_hmean = sum(rf_predictions) / len(rf_predictions)
+            rf_bias = (rf_hmean - offset) ** 2
+            rf_s = 1 / (len(rf_predictions) - 1) * sum((p - rf_hmean) ** 2 for p in rf_predictions)
+            rf_gen_error = rf_bias + rf_s
+            results_table.append(list(map(str, [i, "forest", round(rf_bias, 4), rf_s, rf_gen_error])))
+            dt_predictions = tuple(map(to_int, [tree.predict(test_df.iloc[i]) for tree in dt_predictors]))
+            dt_hmean = sum(dt_predictions) / len(dt_predictions)
+            dt_bias = (dt_hmean - offset) ** 2
+            dt_s = 1 / (len(dt_predictions) - 1) * sum((p - dt_hmean) ** 2 for p in dt_predictions)
+            dt_gen_error = dt_bias + dt_s
+            results_table.append(list(map(str, [i, "tree", round(dt_bias, 4), dt_s, dt_gen_error])))
+        rf_rows = [row for row in results_table[1:] if row[1] == "forest"]
+        rf_avg_bias = sum(float(r[2]) for r in rf_rows) / len(rf_rows)
+        rf_avg_var = sum(float(r[3]) for r in rf_rows) / len(rf_rows)
+        rf_error = rf_avg_bias + rf_avg_var
+        with open("reports/2e_forest_err.txt", "w+") as f:
+            f.write(f"{rf_avg_bias=}\n")
+            f.write(f"{rf_avg_var=}\n")
+            f.write(f"{rf_error=}")
+        dt_rows = [row for row in results_table[1:] if row[1] == "tree"]
+        dt_avg_bias = sum(float(r[2]) for r in dt_rows) / len(dt_rows)
+        dt_avg_var = sum(float(r[3]) for r in dt_rows) / len(dt_rows)
+        dt_error = dt_avg_bias + dt_avg_var
+        with open("reports/2e_tree_err.txt", "w+") as f:
+            f.write(f"{dt_avg_bias=}\n")
+            f.write(f"{dt_avg_var=}\n")
+            f.write(f"{dt_error=}")
+        with open("reports/2e.csv", "w+") as f:
             for row in results_table:
                 f.write(",".join(row) + "\n")
 
@@ -220,6 +268,7 @@ if __name__ == "__main__":
     parser.add_argument("--q2b", action="store_true")
     parser.add_argument("--q2c", action="store_true")
     parser.add_argument("--q2d", action="store_true")
+    parser.add_argument("--q2e", action="store_true")
     parser.add_argument("--all", action="store_true")
     args = parser.parse_args()
     if args.all:
@@ -233,3 +282,5 @@ if __name__ == "__main__":
         HW2.question2c()
     if args.q2d:
         HW2.question2d()
+    if args.q2e:
+        HW2.question2e()
