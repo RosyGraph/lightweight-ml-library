@@ -6,9 +6,8 @@ from .decision_tree import DecisionTree
 
 class DecisionStump(DecisionTree):
     def __init__(self, df, attributes, labels, w):
-        split_func = lambda s, attr: split_functions.split_information_gain(s, attr, w)
         self.w = w
-        super().__init__(df, attributes, labels, split_func=split_func, max_depth=1)
+        super().__init__(df, attributes, labels, max_depth=1)
 
     def error(self, df, w):
         total_error = np.finfo(float).eps

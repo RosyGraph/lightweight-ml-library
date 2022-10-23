@@ -10,6 +10,7 @@ from . import split_functions
 from .adaboost import AdaBoost
 from .build_features import build_features
 from .decision_tree import DecisionTree
+from .random_forest import RandomForest
 
 
 def compare_depth_and_split(dataset: str, max_depth=5) -> list[dict]:
@@ -176,6 +177,38 @@ class HW2(object):
             for row in results_table:
                 f.write(",".join(row) + "\n")
 
+    @staticmethod
+    def question2d():
+        dataset = "bank"
+        df, attributes, labels = build_features(dataset)
+        df["_weight"] = np.ones(len(df.index)) / len(df.index)
+        max_m = 500
+        max_k = 6
+        results_table = [["m", "k", "training/test", "error"]]
+        predictors = [
+            (m, k, RandomForest(df, attributes, labels, m, num_attr=k))
+            for m in range(1, max_m + 1)
+            for k in range(2, max_k + 1, 2)
+        ]
+        test_df, _, _ = build_features(dataset=dataset, test=True)
+        train_df, _, _ = build_features(dataset=dataset, test=False)
+        for m, k, rf in predictors:
+            train_err = 0
+            for i in train_df.index:
+                prediction = rf.predict(train_df.iloc[i])
+                train_err += prediction != train_df["label"].iloc[i]
+            train_err_rate = train_err / len(train_df.index)
+            results_table.append(list(map(str, (m, k, "training", train_err_rate))))
+            test_err = 0
+            for i in test_df.index:
+                prediction = rf.predict(test_df.iloc[i])
+                test_err += prediction != test_df["label"].iloc[i]
+            test_err_rate = test_err / len(test_df.index)
+            results_table.append(list(map(str, (m, k, "test", test_err_rate))))
+        with open("reports/2d.csv", "w+") as f:
+            for row in results_table:
+                f.write(",".join(row) + "\n")
+
 
 if __name__ == "__main__":
     """
@@ -186,6 +219,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Runner for ensemble learner experiments")
     parser.add_argument("--q2b", action="store_true")
     parser.add_argument("--q2c", action="store_true")
+    parser.add_argument("--q2d", action="store_true")
     parser.add_argument("--all", action="store_true")
     args = parser.parse_args()
     if args.all:
@@ -197,3 +231,5 @@ if __name__ == "__main__":
         HW2.question2b()
     if args.q2c:
         HW2.question2c()
+    if args.q2d:
+        HW2.question2d()
