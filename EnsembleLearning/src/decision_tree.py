@@ -2,19 +2,17 @@ from typing import Optional
 
 import pandas as pd
 
-from . import split_functions
+from .split_functions import split_information_gain
 
 
 class DecisionTree(object):
     """The DecisionTree class represents the decision process for labelling data using the ID3 algorithm."""
 
-    def __init__(
-        self, df: pd.DataFrame, attributes, labels, split_func=split_functions.split_information_gain, max_depth=-1
-    ):
+    def __init__(self, df: pd.DataFrame, attributes, labels, max_depth=-1):
         self.df = df
         self.attributes = attributes
         self.labels = labels
-        self.tree: Node = id3(self.df, self.attributes, split_func=split_func, depth=max_depth)
+        self.tree: Node = id3(self.df, self.attributes, depth=max_depth)
 
     def predict(self, test_example) -> Optional[str]:
         """Make a prediction for a given test example."""
@@ -46,9 +44,7 @@ class Node(object):
         self.attribute: Optional[str] = None
 
 
-def id3(
-    s: pd.DataFrame, attributes: dict, label="label", split_func=split_functions.split_information_gain, depth=-1
-) -> Node:
+def id3(s: pd.DataFrame, attributes: dict, label="label", depth=-1) -> Node:
     """
     Construct a decision tree using the id3 algorithm. If a negative depth is
     supplied, then the algorithm will construct a tree with the maximum
@@ -61,7 +57,7 @@ def id3(
     if not attributes or depth == 0:
         root.label = s[label].value_counts().index[0]
         return root
-    a: str = split_func(s, attributes)
+    a: str = split_information_gain(s, attributes)
     root.attribute = a
     for v in attributes[a]:
         subset = s[s[a] == v]
@@ -69,6 +65,6 @@ def id3(
             root.label = s[label].value_counts().index[0]
         else:
             new_attributes = {k: v for k, v in attributes.items() if k != a}
-            child = id3(subset, new_attributes, label, split_func, depth=depth - 1)
+            child = id3(subset, new_attributes, label, depth=depth - 1)
             root.children.append(child)
     return root

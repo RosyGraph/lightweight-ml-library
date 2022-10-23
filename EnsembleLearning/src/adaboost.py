@@ -49,7 +49,6 @@ def adaboost(df, attributes, t):
     for i in range(t):
         stump = DecisionStump(df, attributes, df["label"].unique(), w)
         error = stump.error(df, w)
-        print(error)
         errors.append((i, error))
         a = 0.5 * np.log((1 - error) / error)
         votes[stump] = a

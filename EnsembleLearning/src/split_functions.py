@@ -21,33 +21,28 @@ def majority_error(s: pd.DataFrame, label="label") -> np.floating:
     return 1 - s[label].value_counts(normalize=True).iloc[0]
 
 
-def split_information_gain(s, attributes, weights) -> str:
+def split_information_gain(s, attributes) -> str:
     """Return the attribute on which to split using information gain."""
-    attr_dict = {attribute: information_gain(s, attributes, attribute, weights) for attribute in attributes}
+    attr_dict = {attribute: information_gain(s, attributes, attribute) for attribute in attributes}
     split_attr = max(attr_dict, key=attr_dict.get)
     return split_attr
 
 
-def information_gain(s, attributes, attribute, weights) -> float:
+def information_gain(s, attributes, attribute) -> float:
     """Return the information gain for a subset s for the given attribute."""
-    gain = entropy(s, weights)
+    gain = entropy(s)
     for v in attributes[attribute]:
         subset = s.loc[s[attribute] == v]
-        gain -= (subset.size / s.size) * entropy(subset, weights)
+        gain -= (subset.size / s.size) * entropy(subset)
     return gain
 
 
-def entropy(s, weights, y="label") -> float:
+def entropy(s) -> float:
     """Return the entropy of the subset s."""
-    positives = []
-    negatives = []
-    for i in s.index:
-        if s[y][i]:
-            positives.append(weights[i])
-        else:
-            negatives.append(weights[i])
-    proportions = np.array([sum(positives), sum(negatives)])
-    proportions /= sum(proportions)
+    positives = np.array(s[s["label"] == True]["_weight"])
+    negatives = np.array(s[s["label"] == False]["_weight"])
+    proportions = np.array([positives.sum(), negatives.sum()], dtype=float)
+    proportions /= proportions.sum() + np.finfo(float).eps
     e = lambda p: p * np.log2(p + np.finfo(float).eps)
     return -e(proportions).sum()
 

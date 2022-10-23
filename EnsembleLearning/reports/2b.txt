@@ -1,0 +1,3 @@
+mode,m,accuracy
+test,0,0.817
+training,0,0.8088

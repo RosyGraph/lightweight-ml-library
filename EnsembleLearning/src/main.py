@@ -1,5 +1,6 @@
 """main.py is the driver for the ID3 algorithm"""
 import os
+from collections import Counter
 
 import numpy as np
 import pandas as pd
@@ -8,14 +9,6 @@ from . import split_functions
 from .adaboost import AdaBoost
 from .build_features import build_features
 from .decision_tree import DecisionTree
-
-
-def report_test_predictions(dataset="car"):
-    test_df, _, _ = build_features(dataset, test=True)
-    for f in (split_functions.split_information_gain, split_functions.gini, split_functions.majority_error_split):
-        print(f"Testing {f.__name__}...")
-        dt = DecisionTree(*build_features("car"), split_func=f)
-        print(f"Prediction score: {round(dt.test_accuracy(test_df)*100, 4)}%.")
 
 
 def compare_depth_and_split(dataset: str, max_depth=5) -> list[dict]:
@@ -75,6 +68,78 @@ class HW2(object):
         print(f"{results_table=}")
         store_results(dataset, results_table)
 
+    @staticmethod
+    def question2b():
+        dataset = "bank"
+        df, attributes, labels = build_features(dataset)
+        df["_weight"] = np.ones(len(df.index)) / len(df.index)
+        results_table = [
+            ["mode", "m", "accuracy"],
+        ]
+        for m in range(500):
+            trees = [DecisionTree(df.sample(frac=0.05, replace=True), attributes, labels) for _ in range(m + 1)]
+            for mode in ("test", "training"):
+                test_df, _, _ = build_features(dataset=dataset, test=mode == "test")
+                errors = 0
+                for j in test_df.index:
+                    predictions = Counter([tree.predict(test_df.iloc[j]) for tree in trees])
+                    prediction = max(predictions, key=predictions.get)
+                    y = test_df["label"][j]
+                    errors += prediction != y
+                accuracy = 1 - (errors / len(test_df))
+                results_table.append([mode, str(m), str(accuracy)])
+        with open("reports/2b.txt", "w+") as f:
+            for row in results_table:
+                f.write(",".join(row) + "\n")
+
+    @staticmethod
+    def question2ci():
+        dataset = "bank"
+        df, attributes, labels = build_features(dataset)
+        df["_weight"] = np.ones(len(df.index)) / len(df.index)
+        results_table = [
+            ["i", "simple/bagged", "bias", "variance", "gen_error"],
+        ]
+        predictors = []
+        m = 100
+        n = 500
+        for _ in range(m):
+            sample = df.sample(n=1000, replace=False)
+            predictors.append(
+                [DecisionTree(sample.sample(frac=0.05, replace=True), attributes, labels) for _ in range(n)]
+            )
+        simple_predictors = [predictor[0] for predictor in predictors]
+        to_int = lambda x: 1 if x else -1
+        test_df, _, _ = build_features(dataset=dataset, test=True)
+        for i in test_df.index:
+            predictions = tuple(map(to_int, [tree.predict(test_df.iloc[i]) for tree in simple_predictors]))
+            hmean = sum(predictions) / len(predictions)
+            offset = to_int(test_df["label"].iloc[i])
+            bias = (hmean - offset) ** 2
+            s = 1 / (len(predictions) - 1) * sum((p - hmean) ** 2 for p in predictions)
+            gen_error = bias + s
+            results_table.append(list(map(str, [i, "simple", round(bias, 4), s, gen_error])))
+            # y = test_df["label"][j]
+            # errors += prediction != y
+        with open("reports/2ci.csv", "w+") as f:
+            for row in results_table:
+                f.write(",".join(row) + "\n")
+        """
+        for m in range(500):
+            for mode in ("test", "training"):
+                errors = 0
+                for j in test_df.index:
+                    predictions = Counter([tree.predict(test_df.iloc[j]) for tree in trees])
+                    prediction = max(predictions, key=predictions.get)
+                    y = test_df["label"][j]
+                    errors += prediction != y
+                accuracy = 1 - (errors / len(test_df))
+                results_table.append([mode, str(m), str(accuracy)])
+        with open("reports/2c.txt", "w+") as f:
+            for row in results_table:
+                f.write(",".join(row) + "\n")
+            """
+
 
 if __name__ == "__main__":
     """
@@ -82,4 +147,4 @@ if __name__ == "__main__":
     take over an hour to run all experiments (subject to hardware limitations).
     """
     # StatsQuest.heart_disease()
-    HW2.question2a()
+    HW2.question2ci()
