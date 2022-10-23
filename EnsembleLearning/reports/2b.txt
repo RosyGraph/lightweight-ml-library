@@ -1,3 +1,5 @@
 mode,m,accuracy
-test,0,0.817
-training,0,0.8088
+test,0,0.8732
+training,0,0.8064
+test,1,0.8066
+training,1,0.8044

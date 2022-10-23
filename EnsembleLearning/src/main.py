@@ -1,4 +1,5 @@
 """main.py is the driver for the ID3 algorithm"""
+import argparse
 import os
 from collections import Counter
 
@@ -71,14 +72,17 @@ class HW2(object):
     @staticmethod
     def question2b():
         dataset = "bank"
+        print("2b")
         df, attributes, labels = build_features(dataset)
         df["_weight"] = np.ones(len(df.index)) / len(df.index)
         results_table = [
             ["mode", "m", "accuracy"],
         ]
-        for m in range(500):
+        for m in range(2):
+            print(f"{m=}")
             trees = [DecisionTree(df.sample(frac=0.05, replace=True), attributes, labels) for _ in range(m + 1)]
             for mode in ("test", "training"):
+                print(f"{mode=}")
                 test_df, _, _ = build_features(dataset=dataset, test=mode == "test")
                 errors = 0
                 for j in test_df.index:
@@ -87,6 +91,7 @@ class HW2(object):
                     y = test_df["label"][j]
                     errors += prediction != y
                 accuracy = 1 - (errors / len(test_df))
+                print(f"{accuracy=}")
                 results_table.append([mode, str(m), str(accuracy)])
         with open("reports/2b.txt", "w+") as f:
             for row in results_table:
@@ -147,4 +152,15 @@ if __name__ == "__main__":
     take over an hour to run all experiments (subject to hardware limitations).
     """
     # StatsQuest.heart_disease()
+    parser = argparse.ArgumentParser(description="Runner for ensemble learner experiments")
+    parser.add_argument("--q2b", action="store_true")
+    parser.add_argument("--all", action="store_true")
+    args = parser.parse_args()
+    if args.all:
+        print("Running all experiments (this is going to take awhile)...")
+        HW2.question2a()
+        HW2.question2b()
+        HW2.question2ci()
+    if args.q2b:
+        HW2.question2b()
     HW2.question2ci()
