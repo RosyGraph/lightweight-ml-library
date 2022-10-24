@@ -265,6 +265,7 @@ if __name__ == "__main__":
     """
     # StatsQuest.heart_disease()
     parser = argparse.ArgumentParser(description="Runner for ensemble learner experiments")
+    parser.add_argument("--q2a", action="store_true")
     parser.add_argument("--q2b", action="store_true")
     parser.add_argument("--q2c", action="store_true")
     parser.add_argument("--q2d", action="store_true")
@@ -276,6 +277,8 @@ if __name__ == "__main__":
         HW2.question2a()
         HW2.question2b()
         HW2.question2c()
+    if args.q2a:
+        HW2.question2a()
     if args.q2b:
         HW2.question2b()
     if args.q2c:
