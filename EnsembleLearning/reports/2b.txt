@@ -1,5 +1,0 @@
-mode,m,accuracy
-test,0,0.8752
-training,0,0.8384
-test,1,0.7969999999999999
-training,1,0.783
