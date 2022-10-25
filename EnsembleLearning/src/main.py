@@ -66,17 +66,17 @@ class HW2(object):
     @staticmethod
     def question2a():
         dataset = "bank"
-        results_table = []
-        m = 100
-        for depth in range(0, m, 50):
-            df, attributes, _ = build_features(dataset)
-            ab = AdaBoost(df, attributes, t=depth + 1)
-            for mode in ("test", "training"):
-                test_df, _, _ = build_features(dataset=dataset, test=mode == "test")
-                results_table.append((depth, ab.test_accuracy(test_df), ab.errors))
-        with open("reports/q2a.csv", "w+") as f:
-            for row in results_table:
-                f.write(",".join(row) + "\n")
+        results_table = [["depth", "mode", "adaboost_acc", "stump_errors"]]
+        df, attributes, _ = build_features(dataset)
+        for start in range(5):
+            for depth in range(start * 100, (start * 100) + 100):
+                ab = AdaBoost(df, attributes, t=depth + 1)
+                for mode in ("test", "training"):
+                    test_df, _, _ = build_features(dataset=dataset, test=mode == "test")
+                    results_table.append(list(map(str, (depth, mode, ab.test_accuracy(test_df), ab.errors))))
+                with open(f"reports/q2a_{start}.csv", "w+") as f:
+                    for row in results_table:
+                        f.write(",".join(row) + "\n")
 
     @staticmethod
     def question2b():
