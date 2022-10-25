@@ -1,4 +1,3 @@
-"""main.py is the driver for the ID3 algorithm"""
 import argparse
 import os
 from collections import Counter
@@ -6,7 +5,6 @@ from collections import Counter
 import numpy as np
 import pandas as pd
 
-from . import split_functions
 from .adaboost import AdaBoost
 from .build_features import build_features
 from .decision_tree import DecisionTree
@@ -81,30 +79,35 @@ class HW2(object):
     @staticmethod
     def question2b():
         dataset = "bank"
-        print("2b")
         df, attributes, labels = build_features(dataset)
         df["_weight"] = np.ones(len(df.index)) / len(df.index)
         results_table = [
             ["mode", "m", "accuracy"],
         ]
         for m in range(500):
-            print(f"{m=}")
             trees = [DecisionTree(df.sample(frac=0.05, replace=True), attributes, labels) for _ in range(m + 1)]
-            for mode in ("test", "training"):
-                print(f"{mode=}")
-                test_df, _, _ = build_features(dataset=dataset, test=mode == "test")
+            test_df, _, _ = build_features(dataset=dataset, test=True)
+            train_df, _, _ = build_features(dataset=dataset, test=False)
+            for mode in ("test", "train"):
                 errors = 0
+                df_len = 0
                 for j in test_df.index:
-                    predictions = Counter([tree.predict(test_df.iloc[j]) for tree in trees])
+                    if mode == "train":
+                        cmp_df = train_df
+                    else:
+                        cmp_df = test_df
+                    df_len = len(cmp_df.index)
+                    predictions = Counter([tree.predict(cmp_df.iloc[j]) for tree in trees])
                     prediction = max(predictions, key=predictions.get)
-                    y = test_df["label"][j]
+                    y = cmp_df["label"][j]
                     errors += prediction != y
-                accuracy = 1 - (errors / len(test_df))
-                print(f"{accuracy=}")
-                results_table.append([mode, str(m), str(accuracy)])
-        with open("reports/2b.txt", "w+") as f:
-            for row in results_table:
-                f.write(",".join(row) + "\n")
+                accuracy = 1 - (errors / df_len)
+                results_table.append(list(map(str, (mode, m, accuracy))))
+            if m % 10 == 0:
+                with open(f"reports/2b_{m}.csv", "w+") as f:
+                    for row in results_table:
+                        f.write(",".join(row) + "\n")
+        print("completed 2b")
 
     @staticmethod
     def question2ci(predictors, test_df, results_table):
