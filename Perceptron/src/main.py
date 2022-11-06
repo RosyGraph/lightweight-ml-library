@@ -18,7 +18,7 @@ def parse_bank_note_csv(test=False):
 def standard_perceptron(X, y, epochs=1, r=0.5):
     w = np.array([np.zeros(X.shape[1])])
     for _ in range(epochs):
-        rand_index = np.arange(y.shape[0])
+        rand_index = np.arange(y.size)
         np.random.shuffle(rand_index)
         for i in rand_index:
             if X[i].dot(w[-1]) * y[i] <= 0:
@@ -26,15 +26,32 @@ def standard_perceptron(X, y, epochs=1, r=0.5):
     return w
 
 
+def voted_perceptron(X, y, epochs=1, r=0.5):
+    w = np.array([np.zeros(X.shape[1])])
+    C = np.zeros(1)
+    for _ in range(epochs):
+        for i in range(y.size):
+            if X[i].dot(w[-1]) * y[i] <= 0:
+                w = np.concatenate((w, np.array([w[-1] + r * (y[i] * X[i])])), axis=0)
+                C = np.concatenate((C, np.ones(1)), axis=0)
+            else:
+                C[-1] += 1
+    return w, C
+
+
 def predict(x, w):
     return sgn(w.dot(x))
 
 
-def test_accuracy(X, y, w):
+def weighted_predict(x, w, C):
+    return sgn(sum([C[i] * sgn(w[i].dot(x)) for i in range(C.size)]))
+
+
+def test_accuracy(X, y, prediction_fn):
     num_correct = 0
-    m = y.shape[0]
+    m = y.size
     for i in range(m):
-        if y[i] == predict(X[i], w):
+        if y[i] == prediction_fn(X[i]):
             num_correct += 1
     return num_correct / m
 
@@ -42,15 +59,26 @@ def test_accuracy(X, y, w):
 def q2a():
     X, y = parse_bank_note_csv()
     w = standard_perceptron(X, y, epochs=10)[-1]
-    accuracy = test_accuracy(*parse_bank_note_csv(test=True), w)
+    accuracy = test_accuracy(*parse_bank_note_csv(test=True), lambda x: predict(x, w))
     print("Question 2 part (a): standard Perceptron")
     print("Learned weight vector")
     print(np.array2string(w))
+    print()
     print(f"Accuracy over the test data set: {accuracy}")
 
 
 def q2b():
-    pass
+    X, y = parse_bank_note_csv()
+    w, C = voted_perceptron(X, y, epochs=10)
+    accuracy = test_accuracy(*parse_bank_note_csv(test=True), lambda x: weighted_predict(x, w, C))
+    print("Question 2 part (b): voted Perceptron")
+    print("Learned weight vector")
+    print(np.array2string(w))
+    print()
+    print("Number of correctly predicted training examples")
+    print(np.array2string(C))
+    print()
+    print(f"Accuracy over the test data set: {accuracy}")
 
 
 def q2c():
