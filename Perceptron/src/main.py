@@ -43,8 +43,18 @@ def q2a():
     X, y = parse_bank_note_csv()
     w = standard_perceptron(X, y, epochs=10)[-1]
     accuracy = test_accuracy(*parse_bank_note_csv(test=True), w)
-    print(f"{w=}")
-    print(f"{accuracy=}")
+    print("Question 2 part (a): standard Perceptron")
+    print("Learned weight vector")
+    print(np.array2string(w))
+    print(f"Accuracy over the test data set: {accuracy}")
+
+
+def q2b():
+    pass
+
+
+def q2c():
+    pass
 
 
 if __name__ == "__main__":
@@ -52,8 +62,33 @@ if __name__ == "__main__":
     parser.add_argument(
         "--q2a",
         action="store_true",
-        help="Run the standard Perceptron on the bank-note data set for T = 1 to 10. Stores the learned weight vector and average prediction error in the reports/ directory.",
+        help="run the standard Perceptron on the bank-note data set for T=10",
+    )
+    parser.add_argument(
+        "--q2b",
+        action="store_true",
+        help="run the voted Perceptron on the bank-note data set for T=10",
+    )
+    parser.add_argument(
+        "--q2c",
+        action="store_true",
+        help="run the average Perceptron on the bank-note data set for T=10",
+    )
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="run standard, voted, and average Perceptron on the bank-note data set for T=10",
     )
     args = parser.parse_args()
+    if args.all:
+        q2a()
+        print()
+        q2b()
+        print()
+        q2c()
     if args.q2a:
         q2a()
+    if args.q2b:
+        q2b()
+    if args.q2c:
+        q2c()
