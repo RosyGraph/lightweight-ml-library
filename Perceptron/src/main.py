@@ -15,7 +15,7 @@ def parse_csv(train_path: str, test_path: str):
     test_csv = np.loadtxt(test_path, delimiter=",")
     _test_X, test_y = test_csv[:, :-1], sgn(test_csv[:, -1])
     test_m, _ = _test_X.shape
-    test_X = np.concatenate((np.ones((test_m, 1)), _X), axis=1)
+    test_X = np.concatenate((np.ones((test_m, 1)), _test_X), axis=1)
     return X, y, test_X, test_y
 
 
