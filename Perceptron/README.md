@@ -1,1 +1,3 @@
-# Ensemble Learning
+# Perceptron
+
+Usage: `./run.sh --help`
