@@ -15,7 +15,7 @@ def parse_bank_note_csv(test=False):
     return X, y
 
 
-def standard_perceptron(X, y, epochs=1, r=0.5):
+def standard_perceptron(X, y, epochs=10, r=0.5):
     w = np.array([np.zeros(X.shape[1])])
     for _ in range(epochs):
         rand_index = np.arange(y.size)
@@ -26,7 +26,7 @@ def standard_perceptron(X, y, epochs=1, r=0.5):
     return w
 
 
-def voted_perceptron(X, y, epochs=1, r=0.5):
+def voted_perceptron(X, y, epochs=10, r=0.5):
     w = np.array([np.zeros(X.shape[1])])
     C = np.zeros(1)
     for _ in range(epochs):
@@ -37,6 +37,17 @@ def voted_perceptron(X, y, epochs=1, r=0.5):
             else:
                 C[-1] += 1
     return w, C
+
+
+def averaged_perceptron(X, y, epochs=10, r=0.5):
+    w = np.array([np.zeros(X.shape[1])])
+    a = np.zeros(X.shape[1])
+    for _ in range(epochs):
+        for i in range(y.size):
+            if X[i].dot(w[-1]) * y[i] <= 0:
+                w = np.concatenate((w, np.array([w[-1] + r * (y[i] * X[i])])), axis=0)
+            a += w[-1]
+    return a
 
 
 def predict(x, w):
@@ -60,7 +71,9 @@ def q2a():
     X, y = parse_bank_note_csv()
     w = standard_perceptron(X, y, epochs=10)[-1]
     accuracy = test_accuracy(*parse_bank_note_csv(test=True), lambda x: predict(x, w))
-    print("Question 2 part (a): standard Perceptron")
+    print("*" * 80)
+    print("Part (a): Standard Perceptron")
+    print("*" * 80)
     print("Learned weight vector")
     print(np.array2string(w))
     print()
@@ -71,7 +84,9 @@ def q2b():
     X, y = parse_bank_note_csv()
     w, C = voted_perceptron(X, y, epochs=10)
     accuracy = test_accuracy(*parse_bank_note_csv(test=True), lambda x: weighted_predict(x, w, C))
-    print("Question 2 part (b): voted Perceptron")
+    print("*" * 80)
+    print("Part (b): Voted Perceptron")
+    print("*" * 80)
     print("Learned weight vector")
     print(np.array2string(w))
     print()
@@ -82,7 +97,16 @@ def q2b():
 
 
 def q2c():
-    pass
+    X, y = parse_bank_note_csv()
+    a = averaged_perceptron(X, y)
+    accuracy = test_accuracy(*parse_bank_note_csv(test=True), lambda x: predict(x, a))
+    print("*" * 80)
+    print("Part (c): Averaged Perceptron")
+    print("*" * 80)
+    print("Learned weight vector (a)")
+    print(np.array2string(a))
+    print()
+    print(f"Accuracy over the test data set: {accuracy}")
 
 
 if __name__ == "__main__":
