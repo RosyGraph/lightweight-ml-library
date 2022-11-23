@@ -1,6 +1,7 @@
 import argparse
 
 import numpy as np
+from scipy.optimize import minimize
 
 
 def sgn(x):
@@ -86,6 +87,20 @@ def q2b():
     return w
 
 
+def q3a():
+    X, y, test_X, test_y = parse_csv("./data/bank-note/train.csv", "./data/bank-note/test.csv")
+    hyperparameters = np.array([100 / 873, 500 / 873, 700 / 873])
+    objective = lambda a: 0.5 * (a @ np.multiply(X @ X.T, y @ y.T) @ a) - a.sum()
+
+    for C in hyperparameters[-2:]:
+        print(f"{C=}")
+        bounds = ((0, C) for _ in range(y.size))
+        starting_guess = np.ones(y.size)
+        constraints = {"type": "eq", "fun": lambda a: a @ y}
+        a = minimize(objective, starting_guess, method="SLSQP", bounds=bounds, constraints=[constraints]).x
+        return a
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Runner for SVM experiments.")
     assign_group = parser.add_argument_group("programming practice experiments")
@@ -98,6 +113,11 @@ if __name__ == "__main__":
         "--q2b",
         action="store_true",
         help="report learned weights and accuracy for SSGD for various C with schedule r0/(1+t)",
+    )
+    assign_group.add_argument(
+        "--q3a",
+        action="store_true",
+        help="report learned weights and accuracy for dual SVM for various C",
     )
     assign_group.add_argument(
         "--all",
@@ -114,3 +134,5 @@ if __name__ == "__main__":
         q2a()
     elif args.q2b:
         q2b()
+    elif args.q3a:
+        q3a()
