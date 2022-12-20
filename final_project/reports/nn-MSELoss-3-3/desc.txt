@@ -1,0 +1,5 @@
+shapes=[32, 16]
+lr=0.05
+epochs=500
+momentum=0.9
+loss_func=MSELoss

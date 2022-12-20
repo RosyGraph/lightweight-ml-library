@@ -1,0 +1,5 @@
+shapes=[32, 32]
+lr=0.5
+epochs=500
+momentum=0.9
+loss_func=L1Loss
