@@ -1,4 +1,7 @@
-This is a machine learning library developed by Chris Stevenson for CS5350/6350 in University of Utah.
+# Machine Learning Practice
 
-# Usage
+This library was developed for the University of Utah's machine learning introductory course.
+
+## Usage
+
 To display usage information for any of the subdirectories listed, please `cd` into the subdirectory and run `./run.sh -h`.
